@@ -143,7 +143,7 @@ export default function CloudflareWidget() {
                 <div style={{ overflowY: isMobile ? 'visible' : 'auto', flex: 1 }}>
                     {tab === 'pages' && pages.map((p, i) => {
                         const deploy = p.latest_deployment
-                        const status = deploy?.stage?.status || 'unknown'
+                        const status = deploy?.stage?.status || (deploy ? 'success' : 'unknown')
                         return (
                             <div key={p.id} style={{
                                 padding: '8px 0',

@@ -3,15 +3,15 @@ import Topbar from './components/Topbar'
 import SideMenu from './components/SideMenu'
 import Overview from './pages/Overview'
 import Fitness from './pages/Fitness'
-import Bike from './pages/Bike'
+import General from './pages/General'
 import Tech from './pages/Tech'
 import './App.css'
 
 const PAGES = {
-  overview: { label: 'Overview',      component: Overview },
-  fitness:  { label: 'Fitness',       component: Fitness  },
-  bike:     { label: 'Bike & Cycling', component: Bike    },
-  tech:     { label: 'Tech & Infra',  component: Tech     },
+  overview: { label: 'Overview', component: Overview },
+  general:  { label: 'General',  component: General  },
+  fitness:  { label: 'Fitness',  component: Fitness  },
+  tech:     { label: 'Tech',     component: Tech     },
 }
 
 export default function App() {
