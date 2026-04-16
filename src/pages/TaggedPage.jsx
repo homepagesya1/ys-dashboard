@@ -1,10 +1,10 @@
-import GymWidget from '../components/widgets/GymWidget'
-import RunsWidget from '../components/widgets/RunsWidget'
-import WeatherWidget from '../components/widgets/WeatherWidget'
-import GitHubWidget from '../components/widgets/GitHubWidget'
-import CloudflareWidget from '../components/widgets/CloudflareWidget'
-import DomainsWidget from '../components/widgets/DomainsWidget'
-import DevicesWidget from '../components/widgets/DevicesWidget'
+import GymWidget from '../components/widgets/gym'
+import RunsWidget from '../components/widgets/runs'
+import WeatherWidget from '../components/widgets/weather'
+import GitHubWidget from '../components/widgets/github'
+import CloudflareWidget from '../components/widgets/cloudflare-pages'
+import DomainsWidget from '../components/widgets/domain-status'
+import DevicesWidget from '../components/widgets/devices'
 
 export const WIDGET_REGISTRY = {
   gym:        { label: 'Gym Sessions',  component: GymWidget,        tags: ['fitness'] },
