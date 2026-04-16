@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 
+const PROXY = 'https://cf-proxy.yannicksalm.ch'
+
 const ACCOUNTS = [
-    { name: 'Yannick', token: import.meta.env.VITE_CF_TOKEN_1, accountId: import.meta.env.VITE_CF_ACCOUNT_ID_1 },
-    { name: 'Spaceholder', token: import.meta.env.VITE_CF_TOKEN_2, accountId: import.meta.env.VITE_CF_ACCOUNT_ID_2 },
+    { name: 'Yannick', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_1 },
+    { name: 'Spaceholder', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_2 },
 ]
 
 export default function CloudflareWidget() {
@@ -21,32 +23,28 @@ export default function CloudflareWidget() {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    useEffect(() => {
-        fetchData()
-    }, [accountIdx])
+    useEffect(() => { fetchData() }, [accountIdx])
 
     async function fetchData() {
         setLoading(true)
         setError(null)
         const account = ACCOUNTS[accountIdx]
-        if (!account.token || !account.accountId) {
-            setError('API Token oder Account ID fehlt in .env')
+        if (!account.accountId) {
+            setError('Account ID fehlt in .env')
             setLoading(false)
             return
         }
 
-        const headers = { 'Authorization': `Bearer ${account.token}` }
-
         try {
             const [pagesRes, workersRes] = await Promise.all([
-                fetch(`https://api.cloudflare.com/client/v4/accounts/${account.accountId}/pages/projects`, { headers }),
-                fetch(`https://api.cloudflare.com/client/v4/accounts/${account.accountId}/workers/scripts`, { headers }),
+                fetch(`${PROXY}?account=${account.accountId}&type=pages`),
+                fetch(`${PROXY}?account=${account.accountId}&type=workers`),
             ])
+
+            if (!pagesRes.ok) throw new Error(`Proxy Fehler ${pagesRes.status}`)
 
             const pagesData = await pagesRes.json()
             const workersData = await workersRes.json()
-
-            if (!pagesRes.ok) throw new Error(pagesData.errors?.[0]?.message || `Pages Fehler ${pagesRes.status}`)
 
             setPages(pagesData.success ? pagesData.result : [])
             setWorkers(workersData.success ? workersData.result : [])
@@ -58,17 +56,16 @@ export default function CloudflareWidget() {
         }
     }
 
-    function deployStatusColor(status) {
-        if (status === 'success') return '#639922'
+    function statusColor(status) {
+        if (status === 'success' || status === 'active') return '#639922'
         if (status === 'failure' || status === 'failed') return '#E24B4A'
-        if (status === 'active') return '#639922'
         return '#BA7517'
     }
 
-    function deployStatusLabel(status) {
+    function statusLabel(status) {
         if (status === 'success') return 'deployed'
-        if (status === 'failure' || status === 'failed') return 'failed'
         if (status === 'active') return 'active'
+        if (status === 'failure' || status === 'failed') return 'failed'
         return status || 'unknown'
     }
 
@@ -99,22 +96,15 @@ export default function CloudflareWidget() {
             <div className="widget-header" style={{ marginBottom: 8 }}>
                 <select
                     value={accountIdx}
-                    onChange={e => setAccountIdx(parseInt(e.target.value))}
+                    onChange={e => { setAccountIdx(parseInt(e.target.value)) }}
                     style={{
-                        background: 'var(--bg)',
-                        border: '0.5px solid var(--border)',
-                        borderRadius: 6,
-                        padding: '3px 6px',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: 'var(--text)',
-                        cursor: 'pointer',
+                        background: 'var(--bg)', border: '0.5px solid var(--border)',
+                        borderRadius: 6, padding: '3px 6px', fontSize: 12,
+                        fontWeight: 600, color: 'var(--text)', cursor: 'pointer',
                         fontFamily: 'system-ui',
                     }}
                 >
-                    {ACCOUNTS.map((a, i) => (
-                        <option key={i} value={i}>{a.name}</option>
-                    ))}
+                    {ACCOUNTS.map((a, i) => <option key={i} value={i}>{a.name}</option>)}
                 </select>
                 <span className="badge badge-api">Cloudflare</span>
             </div>
@@ -128,7 +118,7 @@ export default function CloudflareWidget() {
                         borderBottom: tab === t ? '2px solid #1D9E75' : '2px solid transparent',
                         marginBottom: -1, textTransform: 'capitalize',
                     }}>
-                        {t} {t === 'pages' ? `(${pages.length})` : `(${workers.length})`}
+                        {t} {!loading && `(${t === 'pages' ? pages.length : workers.length})`}
                     </div>
                 ))}
             </div>
@@ -161,28 +151,22 @@ export default function CloudflareWidget() {
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        {/* Project name */}
                                         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {p.name}
                                         </div>
-                                        {/* URL */}
                                         {p.subdomain && (
                                             <div style={{ fontSize: 11, color: '#378ADD', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {p.subdomain}
                                             </div>
                                         )}
-                                        {/* Meta */}
                                         <div style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: 11, color: 'var(--muted)' }}>
-                                            <span>Branch: {deploy?.deployment_trigger?.metadata?.branch || p.production_branch || 'main'}</span>
+                                            <span>{deploy?.deployment_trigger?.metadata?.branch || p.production_branch || 'main'}</span>
                                             <span>{timeAgo(deploy?.created_on)}</span>
                                         </div>
                                     </div>
-                                    {/* Status */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: deployStatusColor(status) }} />
-                                        <span style={{ fontSize: 11, color: deployStatusColor(status) }}>
-                                            {deployStatusLabel(status)}
-                                        </span>
+                                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor(status) }} />
+                                        <span style={{ fontSize: 11, color: statusColor(status) }}>{statusLabel(status)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -199,9 +183,7 @@ export default function CloudflareWidget() {
                                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {w.id}
                                 </div>
-                                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-                                    {timeAgo(w.modified_on)}
-                                </div>
+                                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{timeAgo(w.modified_on)}</div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#639922' }} />
