@@ -87,4 +87,4 @@ Cloudflare baut und deployed automatisch auf `dashboard.yannicksalm.ch`.
 
 ---
 
-*Privates Projekt — Yannick Salm - ttt*
+*Privates Projekt — Yannick Salm*
