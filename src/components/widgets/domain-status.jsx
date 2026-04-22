@@ -6,11 +6,11 @@ const ACCOUNTS = {
     domains: [
       { label: 'yannicksalm.ch', url: 'https://yannicksalm.ch' },
       { label: 'dashboard.yannicksalm.ch', url: 'https://dashboard.yannicksalm.ch' },
+      { label: 'workout.yannicksalm.ch', url: 'https://workout.yannicksalm.ch' },
       { label: 'note.yannicksalm.ch', url: 'https://note.yannicksalm.ch' },
       { label: 'template-pt-1.yannicksalm.ch', url: 'https://template-pt-1.yannicksalm.ch' },
       { label: 'template-pt-2.yannicksalm.ch', url: 'https://template-pt-2.yannicksalm.ch' },
       { label: 'template-pt-3.yannicksalm.ch', url: 'https://template-pt-3.yannicksalm.ch' },
-      { label: 'workout.yannicksalm.ch', url: 'https://workout.yannicksalm.ch' },
     ]
   },
   frauenverein: {
