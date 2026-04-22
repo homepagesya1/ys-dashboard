@@ -4,7 +4,7 @@ const PROXY = 'https://cf-proxy.yannicksalm.ch'
 
 const ACCOUNTS = [
     { name: 'Yannick', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_1 },
-    { name: 'Spaceholder', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_2 },
+    { name: 'Frauenverein', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_2 },
 ]
 
 export default function CloudflareWidget() {

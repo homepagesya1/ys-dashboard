@@ -143,7 +143,7 @@ export default function YsWorkoutWidget() {
       {/* Header */}
       <div className="widget-header" style={{ marginBottom: 8 }}>
         <span className="widget-title">ys-workout</span>
-        <span className="badge badge-api">Monitor</span>
+        <span className="badge badge-api">live</span>
       </div>
 
       {/* Tabs */}

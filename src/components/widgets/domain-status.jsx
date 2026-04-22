@@ -4,19 +4,20 @@ const ACCOUNTS = {
   yannick: {
     label: 'Yannick',
     domains: [
-      { label: 'yannicksalm.ch',              url: 'https://yannicksalm.ch' },
-      { label: 'dashboard.yannicksalm.ch',    url: 'https://dashboard.yannicksalm.ch' },
-      { label: 'note.yannicksalm.ch',         url: 'https://note.yannicksalm.ch' },
+      { label: 'yannicksalm.ch', url: 'https://yannicksalm.ch' },
+      { label: 'dashboard.yannicksalm.ch', url: 'https://dashboard.yannicksalm.ch' },
+      { label: 'note.yannicksalm.ch', url: 'https://note.yannicksalm.ch' },
       { label: 'template-pt-1.yannicksalm.ch', url: 'https://template-pt-1.yannicksalm.ch' },
       { label: 'template-pt-2.yannicksalm.ch', url: 'https://template-pt-2.yannicksalm.ch' },
       { label: 'template-pt-3.yannicksalm.ch', url: 'https://template-pt-3.yannicksalm.ch' },
+      { label: 'workout.yannicksalm.ch', url: 'https://workout.yannicksalm.ch' },
     ]
   },
   frauenverein: {
     label: 'Frauenverein',
     domains: [
-      { label: 'frauenverein-sarmenstorf.ch',       url: 'https://frauenverein-sarmenstorf.ch' },
-      { label: 'link.frauenverein-sarmenstorf.ch',  url: 'https://link.frauenverein-sarmenstorf.ch' },
+      { label: 'frauenverein-sarmenstorf.ch', url: 'https://frauenverein-sarmenstorf.ch' },
+      { label: 'link.frauenverein-sarmenstorf.ch', url: 'https://link.frauenverein-sarmenstorf.ch' },
       { label: 'links.frauenverein-sarmenstorf.ch', url: 'https://links.frauenverein-sarmenstorf.ch' },
     ]
   }
@@ -162,7 +163,7 @@ export default function DomainsWidget() {
                           width: `${Math.min((r.ms / 1000) * 100, 100)}%`,
                           background: speedColor(r.speed, r.ok),
                           borderRadius: 2,
-                        }}/>
+                        }} />
                       </div>
                       <span style={{ fontSize: 11, color: 'var(--muted)', minWidth: 36, textAlign: 'right' }}>
                         {r.ms}ms
@@ -170,7 +171,7 @@ export default function DomainsWidget() {
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: speedColor(r.speed, r.ok) }}/>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: speedColor(r.speed, r.ok) }} />
                     <span style={{ fontSize: 11, color: speedColor(r.speed, r.ok), minWidth: 36 }}>
                       {r.ok ? r.speed : 'offline'}
                     </span>
