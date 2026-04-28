@@ -6,6 +6,7 @@ import CloudflareWidget from '../components/widgets/cloudflare-pages'
 import DomainsWidget from '../components/widgets/domain-status'
 import DevicesWidget from '../components/widgets/devices'
 import YsWorkoutWidget from '../components/widgets/ys-workout'
+import SupabaseStatsWidget from '../components/widgets/supabase-stats'
 
 
 export const WIDGET_REGISTRY = {
@@ -17,6 +18,7 @@ export const WIDGET_REGISTRY = {
   domains: { label: 'Domains', component: DomainsWidget, tags: ['general', 'tech'] },
   devices: { label: 'Geräte', component: DevicesWidget, tags: ['general', 'tech'] },
   ysworkout: { label: 'ys-workout', component: YsWorkoutWidget, tags: ['tech'] },
+  supabasestats: { label: 'Supabase Stats', component: SupabaseStatsWidget, tags: ['tech'] },
 }
 
 export default function TaggedPage({ tag, title }) {

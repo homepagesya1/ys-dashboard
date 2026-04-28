@@ -76,6 +76,8 @@ export default function GitHubWidget() {
     }}>
       {/* Header */}
       <div className="widget-header" style={{ marginBottom: 10 }}>
+        <span className="widget-title">Github</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}></div>
         <select
           value={account}
           onChange={e => setAccount(e.target.value)}
@@ -177,7 +179,7 @@ export default function GitHubWidget() {
                           width: 8, height: 8, borderRadius: '50%',
                           background: LANG_COLORS[repo.language] || '#888',
                           flexShrink: 0,
-                        }}/>
+                        }} />
                         {repo.language}
                       </span>
                     )}

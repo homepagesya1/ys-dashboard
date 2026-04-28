@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react'
 const PROXY = 'https://cf-proxy.yannicksalm.ch'
 
 const ACCOUNTS = [
-    { name: 'Yannick', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_1 },
+    { name: 'Yannick',      accountId: import.meta.env.VITE_CF_ACCOUNT_ID_1 },
     { name: 'Frauenverein', accountId: import.meta.env.VITE_CF_ACCOUNT_ID_2 },
 ]
 
 export default function CloudflareWidget() {
     const [accountIdx, setAccountIdx] = useState(0)
-    const [tab, setTab] = useState('pages')
+    const [tab, setTab] = useState('all')
     const [pages, setPages] = useState([])
     const [workers, setWorkers] = useState([])
     const [loading, setLoading] = useState(true)
@@ -34,18 +34,14 @@ export default function CloudflareWidget() {
             setLoading(false)
             return
         }
-
         try {
             const [pagesRes, workersRes] = await Promise.all([
                 fetch(`${PROXY}?account=${account.accountId}&type=pages`),
                 fetch(`${PROXY}?account=${account.accountId}&type=workers`),
             ])
-
             if (!pagesRes.ok) throw new Error(`Proxy Fehler ${pagesRes.status}`)
-
             const pagesData = await pagesRes.json()
             const workersData = await workersRes.json()
-
             setPages(pagesData.success ? pagesData.result : [])
             setWorkers(workersData.success ? workersData.result : [])
             setLastUpdated(new Date())
@@ -69,6 +65,10 @@ export default function CloudflareWidget() {
         return status || 'unknown'
     }
 
+    function isError(status) {
+        return status === 'failure' || status === 'failed' || status === 'unknown'
+    }
+
     function timeAgo(dateStr) {
         if (!dateStr) return '—'
         const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
@@ -78,7 +78,31 @@ export default function CloudflareWidget() {
         return `vor ${Math.floor(diff / 86400)}d`
     }
 
-    const currentItems = tab === 'pages' ? pages : workers
+    // Build items per tab — errors/down first
+    const pageItems = pages.map(p => {
+        const deploy = p.latest_deployment
+        const status = deploy?.stage?.status || (deploy ? 'success' : 'unknown')
+        return { id: p.id, name: p.name, sub: p.subdomain, branch: deploy?.deployment_trigger?.metadata?.branch || p.production_branch || 'main', date: deploy?.created_on, status, type: 'Pages', error: isError(status) }
+    })
+
+    const workerItems = workers.map(w => ({
+        id: w.id, name: w.id, sub: null, branch: null, date: w.modified_on, status: 'active', type: 'Worker', error: false
+    }))
+
+    function sortErrorFirst(items) {
+        return [...items].sort((a, b) => (b.error ? 1 : 0) - (a.error ? 1 : 0))
+    }
+
+    const allItems = sortErrorFirst([...pageItems, ...workerItems])
+    const currentItems = tab === 'all' ? allItems : tab === 'pages' ? sortErrorFirst(pageItems) : sortErrorFirst(workerItems)
+
+    const errorCount = allItems.filter(i => i.error).length
+
+    const tabs = [
+        { key: 'all',     label: 'Alle',    count: allItems.length },
+        { key: 'pages',   label: 'Pages',   count: pageItems.length },
+        { key: 'workers', label: 'Workers', count: workerItems.length },
+    ]
 
     return (
         <div style={{
@@ -94,31 +118,39 @@ export default function CloudflareWidget() {
         }}>
             {/* Header */}
             <div className="widget-header" style={{ marginBottom: 8 }}>
-                <select
-                    value={accountIdx}
-                    onChange={e => { setAccountIdx(parseInt(e.target.value)) }}
-                    style={{
-                        background: 'var(--bg)', border: '0.5px solid var(--border)',
-                        borderRadius: 6, padding: '3px 6px', fontSize: 12,
-                        fontWeight: 600, color: 'var(--text)', cursor: 'pointer',
-                        fontFamily: 'system-ui',
-                    }}
-                >
-                    {ACCOUNTS.map((a, i) => <option key={i} value={i}>{a.name}</option>)}
-                </select>
-                <span className="badge badge-api">Cloudflare</span>
+                <span className="widget-title">Cloudflare</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {errorCount > 0 && (
+                        <span style={{ fontSize: 10, padding: '2px 6px', background: '#FEE2E2', color: '#E24B4A', borderRadius: 20 }}>
+                            {errorCount} Fehler
+                        </span>
+                    )}
+                    <select
+                        value={accountIdx}
+                        onChange={e => setAccountIdx(parseInt(e.target.value))}
+                        style={{
+                            background: 'var(--bg)', border: '0.5px solid var(--border)',
+                            borderRadius: 6, padding: '3px 6px', fontSize: 12,
+                            fontWeight: 600, color: 'var(--text)', cursor: 'pointer',
+                            fontFamily: 'system-ui',
+                        }}
+                    >
+                        {ACCOUNTS.map((a, i) => <option key={i} value={i}>{a.name}</option>)}
+                    </select>
+                    <span className="badge badge-api">Cloudflare</span>
+                </div>
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4, borderBottom: '0.5px solid var(--border)', marginBottom: 10 }}>
-                {['pages', 'workers'].map(t => (
-                    <div key={t} onClick={() => setTab(t)} style={{
+            <div style={{ display: 'flex', gap: 0, borderBottom: '0.5px solid var(--border)', marginBottom: 10 }}>
+                {tabs.map(t => (
+                    <div key={t.key} onClick={() => setTab(t.key)} style={{
                         padding: '5px 10px', fontSize: 12, cursor: 'pointer',
-                        color: tab === t ? '#1D9E75' : 'var(--muted)',
-                        borderBottom: tab === t ? '2px solid #1D9E75' : '2px solid transparent',
-                        marginBottom: -1, textTransform: 'capitalize',
+                        color: tab === t.key ? '#1D9E75' : 'var(--muted)',
+                        borderBottom: tab === t.key ? '2px solid #1D9E75' : '2px solid transparent',
+                        marginBottom: -1,
                     }}>
-                        {t} {!loading && `(${t === 'pages' ? pages.length : workers.length})`}
+                        {t.label} {!loading && `(${t.count})`}
                     </div>
                 ))}
             </div>
@@ -137,57 +169,40 @@ export default function CloudflareWidget() {
                 </div>
             ) : currentItems.length === 0 ? (
                 <div style={{ fontSize: 13, color: 'var(--muted)', padding: '16px 0', textAlign: 'center' }}>
-                    Keine {tab === 'pages' ? 'Pages' : 'Workers'} gefunden
+                    Nichts gefunden
                 </div>
             ) : (
                 <div style={{ overflowY: isMobile ? 'visible' : 'auto', flex: 1 }}>
-                    {tab === 'pages' && pages.map((p, i) => {
-                        const deploy = p.latest_deployment
-                        const status = deploy?.stage?.status || (deploy ? 'success' : 'unknown')
-                        return (
-                            <div key={p.id} style={{
-                                padding: '8px 0',
-                                borderBottom: i < pages.length - 1 ? '0.5px solid var(--border)' : 'none',
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {p.name}
-                                        </div>
-                                        {p.subdomain && (
-                                            <div style={{ fontSize: 11, color: '#378ADD', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {p.subdomain}
-                                            </div>
-                                        )}
-                                        <div style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: 11, color: 'var(--muted)' }}>
-                                            <span>{deploy?.deployment_trigger?.metadata?.branch || p.production_branch || 'main'}</span>
-                                            <span>{timeAgo(deploy?.created_on)}</span>
-                                        </div>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor(status) }} />
-                                        <span style={{ fontSize: 11, color: statusColor(status) }}>{statusLabel(status)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
-
-                    {tab === 'workers' && workers.map((w, i) => (
-                        <div key={w.id} style={{
+                    {currentItems.map((item, i) => (
+                        <div key={item.id + i} style={{
                             padding: '8px 0',
-                            borderBottom: i < workers.length - 1 ? '0.5px solid var(--border)' : 'none',
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+                            borderBottom: i < currentItems.length - 1 ? '0.5px solid var(--border)' : 'none',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8,
+                            background: item.error ? 'rgba(226,75,74,0.04)' : 'transparent',
+                            borderRadius: item.error ? 4 : 0,
                         }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {w.id}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 1 }}>
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {item.name}
+                                    </span>
+                                    <span style={{ fontSize: 10, padding: '1px 5px', background: 'var(--bg)', borderRadius: 10, color: 'var(--muted)', flexShrink: 0 }}>
+                                        {item.type}
+                                    </span>
                                 </div>
-                                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{timeAgo(w.modified_on)}</div>
+                                {item.sub && (
+                                    <div style={{ fontSize: 11, color: '#378ADD', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {item.sub}
+                                    </div>
+                                )}
+                                <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                                    {item.branch && <span>{item.branch} · </span>}
+                                    {timeAgo(item.date)}
+                                </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#639922' }} />
-                                <span style={{ fontSize: 11, color: '#639922' }}>active</span>
+                                <div style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor(item.status) }}/>
+                                <span style={{ fontSize: 11, color: statusColor(item.status) }}>{statusLabel(item.status)}</span>
                             </div>
                         </div>
                     ))}

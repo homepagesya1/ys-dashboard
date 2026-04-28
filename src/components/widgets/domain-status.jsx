@@ -88,6 +88,8 @@ export default function DomainsWidget() {
     }}>
       {/* Header */}
       <div className="widget-header" style={{ marginBottom: 10 }}>
+        <span className="widget-title">Domains</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}></div>
         <select
           value={accountKey}
           onChange={e => setAccountKey(e.target.value)}
